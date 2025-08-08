@@ -18,8 +18,8 @@
     button{pointer-events:auto;border:none;border-radius:999px;padding:10px 14px;background:var(--accent);color:#fff;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.3);cursor:pointer}
     button.secondary{background:rgba(0,0,0,.55)}
     .frame{position:absolute;inset:0;border:10px solid var(--brand); box-shadow: inset 0 0 0 2px rgba(255,255,255,.06); pointer-events:none}
-    .logo{position:absolute;left:12px;bottom:12px;pointer-events:none}
-    .logo img{display:block;height:40px}
+    .logo{position:absolute;left:20px;bottom:20px;pointer-events:none;padding:10px;background:transparent;}
+    .logo img{display:block;height:50px}
     .overlay{position:absolute;inset:0;display:grid;place-items:center;background:linear-gradient(0deg,rgba(0,0,0,.75),rgba(0,0,0,.35));color:#fff;text-align:center;padding:24px}
     .end{position:absolute;inset:0;display:none;place-items:center;background:linear-gradient(0deg,rgba(0,0,0,.75),rgba(0,0,0,.35));color:#fff;}
     .end.active{display:grid;}
@@ -64,5 +64,18 @@
       </div>
     </div>
   </div>
+
+  <script>
+    document.getElementById('btnStart').addEventListener('click', async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+        const video = document.getElementById('cam');
+        video.srcObject = stream;
+        video.style.display = 'block';
+      } catch (err) {
+        alert('Camera access is required to play. Please enable it in your browser settings.');
+      }
+    });
+  </script>
 </body>
 </html>
