@@ -6,30 +6,31 @@
   <title>HUT 3 – AR Candy Catcher (Game)</title>
   <style>
     :root{ --brand:#111827; --accent:#ff3e7f; --good:#16a34a; --bad:#ef4444; }
-    html,body{margin:0;padding:0;height:100%;background:#000;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;}
-    #app{position:fixed;inset:0;overflow:hidden;background:#000;color:#fff;}
-    video#cam{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:none;}
-    canvas#game{position:absolute;inset:0;width:100%;height:100%;}
-    .hud{position:absolute;left:0;right:0;top:0;display:flex;justify-content:space-between;align-items:center;padding:12px 14px;pointer-events:none;z-index:2}
+    html,body{margin:0;padding:0;height:100%;background:#000;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#fff}
+    #app{position:fixed;inset:0;overflow:hidden;background:#000}
+    video#cam{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:none}
+    canvas#game{position:absolute;inset:0;width:100%;height:100%}
+    .hud{position:absolute;left:0;right:0;top:0;display:flex;justify-content:space-between;align-items:center;padding:12px 14px;pointer-events:none;z-index:3}
     .badge{pointer-events:auto;background:rgba(0,0,0,.55);color:#fff;padding:6px 10px;border-radius:12px;font-weight:600;backdrop-filter:blur(6px)}
     .score{font-size:18px}
     .timer{font-variant-numeric:tabular-nums}
-    .controls{position:absolute;right:12px;bottom:12px;display:flex;gap:8px;z-index:2}
+    .controls{position:absolute;right:12px;bottom:12px;display:flex;gap:8px;z-index:3}
     button{pointer-events:auto;border:none;border-radius:999px;padding:10px 14px;background:var(--accent);color:#fff;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.3);cursor:pointer}
     button.secondary{background:rgba(0,0,0,.55)}
     .frame{position:absolute;inset:0;border:10px solid var(--brand); box-shadow: inset 0 0 0 2px rgba(255,255,255,.06); pointer-events:none}
-    .logo{position:absolute;left:24px;bottom:24px;pointer-events:none;padding:6px 10px;background:transparent;z-index:2}
+    .logo{position:absolute;left:24px;bottom:24px;pointer-events:none;padding:6px 10px;z-index:3}
     .logo img{display:block;height:56px}
 
-    /* End screen */
-    .end{position:absolute;inset:0;display:none;place-items:center;background:linear-gradient(0deg,rgba(0,0,0,.75),rgba(0,0,0,.35));color:#fff;z-index:3}
+    .end{position:absolute;inset:0;display:none;place-items:center;background:linear-gradient(0deg,rgba(0,0,0,.75),rgba(0,0,0,.35));z-index:4}
     .end.active{display:grid}
     .end .card{background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:20px;max-width:520px;color:#fff}
-    .end .card h2{margin:0 0 8px 0;color:#fff}
-    .end .card p, .end .card input, .end .card button, .end .card .small{color:#fff}
+    .end .card h2{margin:0 0 8px 0}
     .end .input{display:flex;gap:10px;margin-top:10px}
-    .end .input input{flex:1;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.15);background:rgba(0,0,0,.4)}
+    .end .input input{flex:1;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.15);background:rgba(0,0,0,.4);color:#fff}
     .small{font-size:12px;opacity:.8;margin-top:8px}
+
+    .toast{position:absolute;left:50%;bottom:84px;transform:translateX(-50%);background:rgba(0,0,0,.7);color:#fff;padding:8px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.15);display:none;z-index:5}
+    .toast.show{display:block}
   </style>
 </head>
 <body>
@@ -64,6 +65,8 @@
         <p class="small">By submitting you agree to the prize draw terms and that HUT 3 may contact you about marketing services. You can unsubscribe anytime.</p>
       </div>
     </div>
+
+    <div id="toast" class="toast"></div>
   </div>
 
   <script type="module">
@@ -80,6 +83,10 @@
     const btnStart = document.getElementById('btnStart');
     const btnMute = document.getElementById('btnMute');
     const btnDebug = document.getElementById('btnDebug');
+    const toast = document.getElementById('toast');
+
+    // ---------- Toast helper ----------
+    function showToast(msg, ms=2200){ toast.textContent = msg; toast.classList.add('show'); clearTimeout(showToast._t); showToast._t = setTimeout(()=>toast.classList.remove('show'), ms); }
 
     // ---------- Audio ----------
     let audioCtx = null; let muted=false;
@@ -142,16 +149,34 @@
     }
 
     // ---------- Wire UI ----------
-    btnStart.addEventListener('click', async ()=>{ try{ ensureAudio(); await initCamera(); await initFace(); start(); } catch(err){ console.warn(err); alert('Could not start camera/face tracking. Please allow camera access and try again.'); } });
+    btnStart.addEventListener('click', async ()=>{
+      ensureAudio();
+      try {
+        await initCamera();
+      } catch (err) {
+        console.error('Camera init failed', err);
+        return showToast(err?.message==='InsecureContext' ? 'Use HTTPS or localhost to enable camera.' : 'Camera blocked. Allow access and tap Start again.');
+      }
+      try {
+        await initFace();
+      } catch (err) {
+        console.warn('Face model failed, switching to pointer mode', err);
+        usePointerMode = true;
+        showToast('Face tracking unavailable. Using pointer mode.');
+      }
+      // Start regardless (pointer fallback is allowed)
+      start();
+    });
+
     btnMute.addEventListener('click', ()=>{ muted=!muted; btnMute.textContent=muted? 'Unmute':'Mute'; });
-    btnDebug.addEventListener('click', ()=>{ showDebug=!showDebug; });
+    btnDebug.addEventListener('click', ()=>{ showDebug=!showDebug; showToast(showDebug? 'Debug ON':'Debug OFF', 1000); });
 
     // Pointer fallback (desktop/testing)
     window.addEventListener('pointermove',(e)=>{ const r=canvas.getBoundingClientRect(); pointer.x=e.clientX-r.left; pointer.y=e.clientY-r.top; });
     window.addEventListener('pointerdown',()=>{ pointer.down=true; });
     window.addEventListener('pointerup',()=>{ pointer.down=false; });
 
-    // Preload face model (doesn't request camera)
+    // Preload face model quietly; don't request camera until user gesture
     (async()=>{ try{ await initFace(); }catch(e){ console.warn('face preload fail',e);} resize(); })();
   </script>
 </body>
