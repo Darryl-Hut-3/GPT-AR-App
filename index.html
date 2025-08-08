@@ -1,5 +1,4 @@
 <!doctype html>
-<!-- Save this file as game.html (your index.html can link to it) -->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -8,7 +7,7 @@
   <style>
     :root{ --brand:#111827; --accent:#ff3e7f; --good:#16a34a; --bad:#ef4444; }
     html,body{margin:0;padding:0;height:100%;background:#000;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;}
-    #app{position:fixed;inset:0;overflow:hidden;background:#000;}
+    #app{position:fixed;inset:0;overflow:hidden;background:#000;color:#fff;}
     video#cam{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:none;}
     canvas#game{position:absolute;inset:0;width:100%;height:100%;}
     .hud{position:absolute;left:0;right:0;top:0;display:flex;justify-content:space-between;align-items:center;padding:12px 14px;pointer-events:none;}
@@ -19,21 +18,17 @@
     button{pointer-events:auto;border:none;border-radius:999px;padding:10px 14px;background:var(--accent);color:#fff;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.3);cursor:pointer}
     button.secondary{background:rgba(0,0,0,.55)}
     .frame{position:absolute;inset:0;border:10px solid var(--brand); box-shadow: inset 0 0 0 2px rgba(255,255,255,.06); pointer-events:none}
-    .logo{position:absolute;left:12px;bottom:12px;background:var(--brand);color:#fff;padding:8px 12px;border-radius:10px;font-weight:900;letter-spacing:0.5px}
+    .logo{position:absolute;left:12px;bottom:12px;pointer-events:none}
+    .logo img{display:block;height:40px}
     .overlay{position:absolute;inset:0;display:grid;place-items:center;background:linear-gradient(0deg,rgba(0,0,0,.75),rgba(0,0,0,.35));color:#fff;text-align:center;padding:24px}
-    .card{background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:20px;max-width:560px}
-    .title{font-size:28px;margin:0 0 6px 0}
-    .subtitle{opacity:.9;margin:0 0 14px 0}
-    .list{opacity:.85;text-align:left;margin:10px auto 16px;max-width:460px}
-    .error{color:var(--bad);margin-top:8px}
-    .end{position:absolute;inset:0;display:none;place-items:center;background:linear-gradient(0deg,rgba(0,0,0,.75),rgba(0,0,0,.35));}
-    .end.active{display:grid}
-    .end .card h2{margin:0 0 8px 0}
-    .input{display:flex;gap:10px;margin-top:10px}
-    .input input{flex:1;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.15);background:rgba(0,0,0,.4);color:#fff}
+    .end{position:absolute;inset:0;display:none;place-items:center;background:linear-gradient(0deg,rgba(0,0,0,.75),rgba(0,0,0,.35));color:#fff;}
+    .end.active{display:grid;}
+    .end .card{background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:20px;max-width:520px;color:#fff;}
+    .end .card h2{margin:0 0 8px 0;color:#fff;}
+    .end .card p, .end .card input, .end .card button, .end .card .small{color:#fff;}
+    .end .input{display:flex;gap:10px;margin-top:10px}
+    .end .input input{flex:1;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.15);background:rgba(0,0,0,.4);}
     .small{font-size:12px;opacity:.8;margin-top:8px}
-    #dbg{position:absolute;left:12px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.55);color:#fff;padding:6px 10px;border-radius:10px;display:none}
-    .show-debug #dbg{display:block}
   </style>
 </head>
 <body>
@@ -53,241 +48,21 @@
     </div>
 
     <div class="frame"></div>
-    <div class="logo">HUT 3</div>
-
-    <div id="overlay" class="overlay">
-      <div class="card">
-        <h1 class="title">AR Candy Catcher</h1>
-        <p class="subtitle" id="subtitle">Open your mouth to catch falling sweets. 30 seconds. Highest score wins.</p>
-        <ul class="list">
-          <li>Click <b>Enable camera & play</b> below and allow camera access</li>
-          <li>Keep your face centred and move your head to line up sweets</li>
-          <li>Open wide to catch!</li>
-        </ul>
-        <div id="permError" class="error" style="display:none"></div>
-        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-          <button id="btnOverlayStart">Enable camera & play</button>
-          <button id="btnFallback" class="secondary" title="Play without camera (pointer to aim, hold click/touch or Space to open mouth)">Play without camera</button>
-          <button id="btnRetry" class="secondary" style="display:none">Retry camera</button>
-        </div>
-        <p class="small" style="margin-top:10px">Troubleshooting: use HTTPS, close other apps using the camera, or check browser Settings → Site settings → Camera.</p>
-      </div>
+    <div class="logo">
+      <img src="https://hut-3.com/wp-content/themes/hut3/images/logo-hut3.svg" alt="HUT 3 logo" />
     </div>
 
     <div id="end" class="end">
-      <div class="card" style="max-width:520px">
+      <div class="card">
         <h2>Great job! Your score: <span id="finalScore">0</span></h2>
         <p>Enter the prize draw: submit your email with your score.</p>
         <div class="input">
           <input id="email" type="email" placeholder="you@company.com" required />
           <button id="submitScore">Submit</button>
         </div>
-        <div id="msg" class="small"></div>
         <p class="small">By submitting you agree to the prize draw terms and that HUT 3 may contact you about marketing services. You can unsubscribe anytime.</p>
       </div>
     </div>
-
-    <div id="dbg">Debug ON</div>
   </div>
-
-  <script type="module">
-    import { FaceLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.7/vision_bundle.mjs";
-
-    // Elements
-    const video = document.getElementById('cam');
-    const canvas = document.getElementById('game');
-    const ctx = canvas.getContext('2d');
-    const scoreEl = document.getElementById('score');
-    const timeEl = document.getElementById('time');
-    const overlay = document.getElementById('overlay');
-    const subtitle = document.getElementById('subtitle');
-    const permError = document.getElementById('permError');
-    const end = document.getElementById('end');
-    const finalScoreEl = document.getElementById('finalScore');
-    const emailInput = document.getElementById('email');
-    const msg = document.getElementById('msg');
-    const btnStart = document.getElementById('btnStart');
-    const btnOverlayStart = document.getElementById('btnOverlayStart');
-    const btnFallback = document.getElementById('btnFallback');
-    const btnRetry = document.getElementById('btnRetry');
-    const btnMute = document.getElementById('btnMute');
-    const btnDebug = document.getElementById('btnDebug');
-    const dbg = document.getElementById('dbg');
-
-    // State
-    let faceLandmarker; let running=false; let muted=false; let showDebug=false;
-    let score=0; let timeLeft=30; let timerId=null; let rafId=null;
-    let sweets=[]; let lastSpawn=0; const SPAWN_EVERY=650;
-    let usePointerMode=false;
-    let pointer={x:innerWidth/2, y:innerHeight/2, down:false};
-
-    // Audio
-    const pop = new Audio(); pop.src = URL.createObjectURL(new Blob([new Uint8Array([82,73,70,70,26,0,0,0,87,65,86,69,102,109,116,32,18,0,0,0,1,0,1,0,68,172,0,0,68,172,0,0,1,0,8,0,100,97,116,97,0,0,0,0])], {type:'audio/wav'}));
-
-    function resize(){ canvas.width = video.videoWidth || innerWidth; canvas.height = video.videoHeight || innerHeight; }
-
-    function secureContextOK(){ return (location.protocol === 'https:' || location.hostname === 'localhost'); }
-
-    async function initCamera(){
-      if(!secureContextOK()) throw new Error('InsecureContext');
-      if(!navigator.mediaDevices?.getUserMedia) throw new Error('getUserMedia not supported');
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode:'user', width:{ideal:1280}, height:{ideal:720} }, audio:false });
-      video.srcObject = stream;
-      try { await video.play(); } catch(e) { /* iOS may require an extra user gesture even after click */ }
-      video.style.display='block';
-      resize();
-      window.addEventListener('resize', resize);
-      // if we get here, camera is live
-      permError.style.display='none';
-      btnRetry.style.display='none';
-    }
-
-    async function initFace(){
-      if(faceLandmarker) return;
-      const filesetResolver = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.7/wasm");
-      faceLandmarker = await FaceLandmarker.createFromOptions(filesetResolver, {
-        baseOptions: { modelAssetPath: "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.7/wasm/face_landmarker.task" },
-        runningMode: 'VIDEO', numFaces: 1,
-        outputFaceBlendshapes: false, outputFacialTransformationMatrixes: false
-      });
-    }
-
-    function mouthOpenMetric(lm){
-      const U = lm[13], L = lm[14], nose = lm[1], chin = lm[152];
-      const mouthGap = Math.hypot((U.x-L.x),(U.y-L.y));
-      const faceLen = Math.hypot((nose.x-chin.x),(nose.y-chin.y));
-      return (mouthGap / faceLen);
-    }
-    function mouthCenter(lm){ const U = lm[13], L = lm[14]; return { x:(U.x+L.x)/2, y:(U.y+L.y)/2 }; }
-
-    function spawnSweet(){
-      const size = Math.random()*30+26;
-      const x = Math.random()*canvas.width;
-      const speed = Math.random()*60+120;
-      const rot = Math.random()*Math.PI*2; const rotSpeed=(Math.random()*2-1)*1.5;
-      const types = ['🍬','🍭','🍫','🍪'];
-      const t = types[Math.floor(Math.random()*types.length)];
-      sweets.push({x,y:-40,size,speed,rot,rotSpeed,t,hit:false});
-    }
-
-    function updateAndDrawSweets(dt){
-      ctx.save();
-      ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.font = '32px system-ui';
-      for(let i=sweets.length-1;i>=0;i--){
-        const s = sweets[i];
-        s.y += s.speed * dt; s.rot += s.rotSpeed * dt;
-        if(s.y - s.size > canvas.height) { sweets.splice(i,1); continue; }
-        ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(s.rot);
-        ctx.font = `${Math.floor(s.size)}px system-ui`; ctx.fillText(s.t, 0, 0);
-        ctx.restore();
-      }
-      ctx.restore();
-    }
-
-    function drawMouthCircle(mx,my,r){
-      ctx.save(); ctx.strokeStyle = 'rgba(0,255,180,.9)'; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.arc(mx,my,r,0,Math.PI*2); ctx.stroke(); ctx.restore();
-    }
-
-    function worldToCanvas(norm){ return { x:(1-norm.x)*canvas.width, y:norm.y*canvas.height }; }
-
-    async function start(){
-      overlay.style.display='none'; end.classList.remove('active'); permError.style.display='none';
-      score=0; timeLeft=30; sweets=[]; scoreEl.textContent=score; timeEl.textContent=timeLeft;
-      running=true; lastSpawn=performance.now();
-      tick();
-      timerId = setInterval(()=>{ timeLeft--; timeEl.textContent=timeLeft; if(timeLeft<=0) stop(); }, 1000);
-    }
-
-    function stop(){ running=false; cancelAnimationFrame(rafId); clearInterval(timerId); finalScoreEl.textContent = score; end.classList.add('active'); }
-
-    function collideWithMouth(mx,my,r){
-      for(let i=sweets.length-1;i>=0;i--){
-        const s = sweets[i]; const dx = s.x - mx, dy = s.y - my; const d = Math.hypot(dx,dy);
-        if(d < r){ sweets.splice(i,1); score++; scoreEl.textContent=score; if(!muted){ try{ pop.currentTime=0; pop.play(); }catch(e){} } }
-      }
-    }
-
-    async function tick(){
-      const now = performance.now(); rafId = requestAnimationFrame(tick); if(!running) return;
-      let c=null; let radius=0; let openness=0; let lm=null;
-      if(!usePointerMode && faceLandmarker && video.readyState>=2){
-        const face = faceLandmarker.detectForVideo(video, now);
-        if(face && face.faceLandmarks && face.faceLandmarks.length){
-          lm = face.faceLandmarks[0]; openness = mouthOpenMetric(lm); const centerN = mouthCenter(lm);
-          c = worldToCanvas(centerN); radius = Math.max(24, openness * 480);
-        }
-      } else { c = {x: pointer.x, y: pointer.y}; openness = pointer.down ? 0.12 : 0.04; radius = Math.max(24, openness * 480); }
-
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      if(now - lastSpawn > SPAWN_EVERY){ spawnSweet(); lastSpawn=now; }
-      const dt = 1/60; updateAndDrawSweets(dt);
-      if(c){ if(showDebug){ drawMouthCircle(c.x, c.y, radius); } if(openness > 0.075){ collideWithMouth(c.x, c.y, radius*0.85); } if(showDebug){ dbg.textContent = `Open: ${openness.toFixed(3)} r=${Math.round(radius)}`; } }
-    }
-
-    async function submitLead(){
-      const email = (emailInput.value||'').trim();
-      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ msg.textContent='Please enter a valid email.'; msg.style.color='var(--bad)'; return; }
-      msg.textContent='Submitting…'; msg.style.color='#fff';
-      try{
-        const res = await fetch('/api/submit-score', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email, score, game:'ar-candy-catcher', ts: new Date().toISOString() }) });
-        if(!res.ok) throw new Error('Network');
-        msg.textContent='Thanks! You’re in the draw.'; msg.style.color='var(--good)';
-      }catch(e){ msg.textContent='Could not submit right now. Please try again.'; msg.style.color='var(--bad)'; }
-    }
-
-    function showError(text, showRetry=true){ permError.textContent = text; permError.style.display='block'; btnRetry.style.display = showRetry? 'inline-block' : 'none'; overlay.style.display='grid'; }
-
-    async function ensurePermissionsAndStart(){
-      // Split errors so we don't label everything as camera-denied
-      try{
-        await initCamera(); // if this succeeds, camera permission is fine
-      } catch(err){
-        console.warn('Camera init failed', err);
-        if(err?.name === 'NotAllowedError' || err?.name === 'SecurityError'){
-          return showError('Camera access was blocked. Tap the address-bar camera icon to allow access, then press Retry.');
-        } else if(err?.message === 'InsecureContext'){
-          return showError('Camera requires HTTPS (or localhost). Please host this page over HTTPS and Retry.');
-        } else if(err?.name === 'NotFoundError'){
-          return showError('No camera found. Connect a camera or try another device. You can also Play without camera.', false);
-        } else if(err?.message?.includes('getUserMedia not supported')){
-          return showError('This browser does not support camera access. Try a recent Safari/Chrome on mobile, or Play without camera.', false);
-        } else {
-          return showError('Could not start the camera. Please try again or use Play without camera.');
-        }
-      }
-
-      // Camera ok — now try face model. If it fails, fall back gracefully.
-      try{ await initFace(); }
-      catch(err){ console.warn('Face model load failed', err); subtitle.textContent='Face tracking failed to load. You can still play in pointer mode.'; usePointerMode = true; }
-
-      // If we got a live stream, go!
-      if(video.srcObject && video.srcObject.getVideoTracks().some(t=>t.readyState==='live')){
-        start();
-      } else {
-        // Extremely defensive: if stream not live, treat like failure but with accurate copy.
-        showError('Camera started but stream is not live. Close other apps using the camera and Retry.');
-      }
-    }
-
-    // UI wiring
-    btnStart.addEventListener('click', ()=>{ overlay.style.display='grid'; });
-    btnOverlayStart.addEventListener('click', ensurePermissionsAndStart);
-    btnRetry.addEventListener('click', ensurePermissionsAndStart);
-    btnFallback.addEventListener('click', ()=>{ usePointerMode=true; video.style.display='none'; start(); });
-    btnMute.addEventListener('click', ()=>{ muted=!muted; btnMute.textContent = muted? 'Unmute':'Mute'; });
-    btnDebug.addEventListener('click', ()=>{ showDebug=!showDebug; document.body.classList.toggle('show-debug', showDebug); });
-    document.getElementById('submitScore').addEventListener('click', submitLead);
-
-    // Pointer fallback controls
-    window.addEventListener('pointermove', (e)=>{ const rect = canvas.getBoundingClientRect(); pointer.x = e.clientX - rect.left; pointer.y = e.clientY - rect.top; });
-    window.addEventListener('pointerdown', ()=>{ pointer.down=true; });
-    window.addEventListener('pointerup', ()=>{ pointer.down=false; });
-    window.addEventListener('keydown', (e)=>{ if(e.code==='Space'){ pointer.down=true; } });
-    window.addEventListener('keyup', (e)=>{ if(e.code==='Space'){ pointer.down=false; } });
-
-    // Preload face model quietly; don't request camera until user gesture
-    (async ()=>{ try{ await initFace(); } catch(e){ console.warn('Preload face failed', e); } resize(); })();
-  </script>
 </body>
 </html>
